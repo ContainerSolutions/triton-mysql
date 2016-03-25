@@ -1,16 +1,34 @@
 {
-  "container": {
-    "type": "DOCKER",
-    "docker": {
-      "image": "${env.IMAGE_PREFIX}/triton-mysql"
-    }
-  },
-  "env" : {
-    "CONSUL_HTTP_SSL_VERIFY" : "true"
-  },
-  "id": "${env.IMAGE_PREFIX}/triton-mysql",
-  "forcePullImage": "true",
-  "instances": 1,
-  "cpus": 0.5,
-  "mem": 512
+    "cmd": "/bin/containerbuddy -config file:///etc/containerbuddy.json /bin/containerbuddy mysqld --console --log-bin=mysql-bin --log_slave_updates=ON --gtid-mode=ON --enforce-gtid-consistency=ON",
+    "container": {
+        "docker": {
+            "image": "${env.IMAGE_PREFIX}/triton-mysql:latest",
+            "network": "HOST"
+        },
+        "type": "DOCKER"
+    },
+    "cpus": 0.1,
+    "env": {
+        "CONSUL_HTTP_SSL_VERIFY": "true",
+        "TRITON_MYSQL_CONSUL": "consul.service.consul",
+        "CONTAINERBUDDY": "file:///etc/containerbuddy.json",
+        "MANTA_BUCKET": "/lguminski/stor/triton-mysql",
+        "MANTA_KEY_ID": "8e:6d:4f:20:e4:10:46:9b:ff:3c:21:bf:57:b9:be:35",
+        "MANTA_PRIVATE_KEY": "MIIEogIBAAKCAQEAxJwEwJKN3qAygPpNBOZB2PAWVbki2ul9AeHlAJGGDCbTOts1AUCr3i4Oxzz+XIi6h6mGHCMyJPIKRXLfhWdhiGXtsjiBj+Dqg/SVigeuLuZaAOXY7TdoULR0x1c6apsE969mWZyMNPqTRslGUBd5OJodcQSMToEvzfqcWoGbl8f59DwM2m9ZWx8Gj0QNEL6KYMh9NMYebJi5CKDX/13FbneD9l/nZMAiJm29x574UkBBG3SV72ZuaY51VxAFmJEVMK+9QIcxfZcj4rrw/iyUaQ8nRi66X0WoGLtiEaF27NaN3E9Gelm+mOK0yBf+QhjhRREWCoJCl98K4HBm35wgcwIDAQABAoIBABJP1cF55OzPTuTkazgBmjBybCIf1Dc/d/0s5P9gjnOjShk5QX6UX22aLJYyAB7uPTFVgMAuJwV55asCP/9U2aiylaj7ylV0RWN07FimznpfyhI7VjEB8B1UMWw/m5lCRvwqwgWmpwhoLj9xj7L1/Lxg3k0gd1D4h1NP/DAR0kQYmkR7wTv+tQ0rjakAH979wo001qMZjj4XmSb8W7UPkFBNI/oaxfkU1yGK//I1mYrIq4kDRPGKxuMAL6yKF6mGm54iX2BTL/EEljwhL93atMNFDETb3ZTXCpxI3mRGAWf+fEAaPj9n7vVi2otfuKH9ZeLX47K11Vc72mUaM6dpzcECgYEA6UigQmcvPWkM4pnHiWRiJhyfUdZjcaPgrqwu30g7KmG/KFwFbfJpoJ+3YO5eHGFfvkIlfRfR89Jqhny8uyQDeIDRreZza4m5z1nyh0JRH9GNvmkfdMLS6lUm2fpa5FjUIToOQeHnkY3Sqb9NgZjv/D7pdwBPs8zBkfIlLzJbXG0CgYEA18EqJWLQAJsle1aLPZZQ61sAaRtGGYGuAbJxMAQqxKjXt5EC5qnqddnU1RS+L3f/cwJK0i59pUtaLLm0wBH7yBr7WrrvMM5upAWepCdzVc8gIPuWDDVAGeRQpRC3Z2FZ0QNIIg1ITglPH5NDxr0JslnKvngu3W10o4BjAe0bpF8CgYABBYdmIwuK6k3bJC9Cg8UGQ7PS6Oxwj/Yo7aoa4jcYHWt34sdHTvt1b52e+AxDdY20yJdfb95EghRjWGJ/M04slevVJiA1RVoh9VPhkcHHMOS9A7rWiQ/hZNQRuk3xmA39w0JSuYmJEqTsh2Dwg1nxsdjV45N1xxzF5diR11edFQKBgGktFSqcfOGOwDrb+YzQVioldpHGZenROc5B+sN5hI/R7zbhThS8CDvjMMmfDwd8695Y47iKSV3m2dKrxN1M5vypipa0Qh38xBrZUnibcrIGApeRjZft7Y2xq06MU5vl7S7i9qsC5piEGTo/Q+8CAFQdSaSIWfA/h3idAabSu4LpAoGAe29K2W90O8oTgvTJu9U72B1v0L96xktP0n1syhLvS9b652m/eP6756EQxcTuhX3sSnv19Ah6gNLdpu5b3nbTKVGRsYY3lzuphlYQOsXBntTAHAvb0Ge0Ek2CA18dTbrQSq2pNiydZjJAJ836jmGjvX8wcp/CaIPDKZ00QP8cgpE=",
+        "MANTA_ROLE": "",
+        "MANTA_SUBUSER": "",
+        "MANTA_URL": "https://us-east.manta.joyent.com",
+        "MANTA_USER": "lguminski",
+        "MYSQL_DATABASE": "mydb",
+        "MYSQL_PASSWORD": "admin",
+        "MYSQL_REPL_PASSWORD": "repl",
+        "MYSQL_REPL_USER": "repl",
+        "MYSQL_USER": "admin",
+        "CONSUL_TOKEN": "aecf93b0-1b6a-4794-8c0a-8fc6624c80b9",
+        "CONSUL_SCHEME": "https"
+    },
+    "forcePullImage": true,
+    "id": "${env.IMAGE_PREFIX}/triton-mysql",
+    "instances": 1,
+    "mem": 256
 }

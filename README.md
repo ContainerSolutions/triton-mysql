@@ -113,5 +113,5 @@ If you start your MySQL container instance with a data directory that already co
 To run on mantl, follow these steps:
 1) Add mantle's `<MANTLE_ROOT>/ssl/cacert.pem` to the root of this repository, and build the container.
 2) Run `docker build -t my_mysql .` to build the container
-3) Run `make ship` to ship the container to the docker hub.
+3)un `make ship` to ship the container to the docker hub.
 4) Run `make mantl-add` to submit a marathon job to mantl.

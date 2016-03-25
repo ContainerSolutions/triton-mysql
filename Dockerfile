@@ -17,12 +17,15 @@ RUN curl -Ls -o get-pip.py https://bootstrap.pypa.io/get-pip.py && \
         python-Consul==0.4.7 \
         manta==2.5.0
 
-# get Containerbuddy release
-RUN export CB=containerbuddy-0.1.1 &&\
-   curl -Lo /tmp/${CB}.tar.gz \
-   https://github.com/joyent/containerbuddy/releases/download/0.1.1/${CB}.tar.gz && \
-   tar -xf /tmp/${CB}.tar.gz && \
-   mv /containerbuddy /bin/
+## get Containerbuddy release
+#RUN export CB=containerbuddy-0.1.1 &&\
+#   curl -Lo /tmp/${CB}.tar.gz \
+#   https://github.com/joyent/containerbuddy/releases/download/0.1.1/${CB}.tar.gz && \
+#   tar -xf /tmp/${CB}.tar.gz && \
+#   mv /containerbuddy /bin/
+
+ADD ./containerbuddy /bin/
+RUN chmod +x /bin/containerbuddy
 
 # configure Containerbuddy and MySQL
 COPY bin/* /bin/

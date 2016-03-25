@@ -3,8 +3,8 @@
 # directly works just fine without this.
 
 MAKEFLAGS += --warn-undefined-variables
-SHELL := $(shell which bash)
-.SHELLFLAGS := -eu -o pipefail
+#SHELL := $(shell which bash)
+#.SHELLFLAGS := -eu -o pipefail
 .DEFAULT_GOAL := help
 
 MANTA_LOGIN ?= triton_mysql
@@ -88,12 +88,15 @@ mantl-add: mantl-check
 
 mantl-del: mantl-check
 		@echo "## deleting $${app}"
-		@curl -q -u $$MANTL_LOGIN:$$MANTL_PASSWORD -k -X DELETE -H 'Content-Type: application/json' https://$${MANTL_CONTROL_HOST}:8080/v2/apps/$${IMAGE_PREFIX}/triton-mysql
+		curl -q -u $$MANTL_LOGIN:$$MANTL_PASSWORD -k -X DELETE -H 'Content-Type: application/json' https://$${MANTL_CONTROL_HOST}:8080/v2/apps/$${IMAGE_PREFIX}/triton-mysql?force=true
 		@echo -e "\n"
 
 
 
 mantl-check:
-	$(call check_var, MANTL_LOGIN MANTL_PASSWORD MANTL_CONTROL_HOST, Required for interaction with mantl)
+	$(call check_var, MANTL_LOGIN MANTL_CONTROL_HOST, Required for interaction with mantl)
+
+sleep:
+	sleep	1
 
 .PHONY: mantl-check

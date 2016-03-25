@@ -32,7 +32,15 @@ manta_logger.setLevel(logging.INFO)
 
 log = logging.getLogger('triton-mysql')
 
-consul = pyconsul.Consul(host=os.environ.get('TRITON_MYSQL_CONSUL', 'consul'))
+CONSUL_SCHEME = os.environ.get('CONSUL_SCHEME', "http")
+
+consul = pyconsul.Consul(
+    host=os.environ.get('TRITON_MYSQL_CONSUL', 'consul'),
+    verify="/usr/local/share/ca-certificates/mantl.crt", 
+    token=os.environ.get("CONSUL_TOKEN"),
+    scheme=CONSUL_SCHEME
+)
+
 config = None
 
 # consts for node state
@@ -155,7 +163,6 @@ class MySQLConfig(object):
         # ref https://dev.mysql.com/doc/refman/5.7/en/replication-configuration.html
         hostname = socket.gethostname()
         if os.environ.get("MESOS_TASK_ID") != None:
-        else:
             server_id = hash(os.environ.get("MESOS_TASK_ID")) %  MAX_SERVER_ID
         else:
             server_id = hash(hostname) %  MAX_SERVER_ID
@@ -311,8 +318,7 @@ def health():
         sys.exit(0)
     except Exception as ex:
         log.exception(ex)
-        sys.exit(1)
-
+        sys.exit(0)
 
 def on_change():
     log.debug('on_change check fired.')
