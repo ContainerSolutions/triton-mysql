@@ -56,6 +56,8 @@ SESSION_CACHE_FILE = os.environ.get('SESSION_CACHE_FILE', '/tmp/mysql-session')
 SESSION_NAME = os.environ.get('SESSION_NAME', 'mysql-primary-lock')
 SESSION_TTL = int(os.environ.get('SESSION_TTL', 60))
 
+MAX_SERVER_ID = (2**32) -1 ; # See http://dev.mysql.com/doc/refman/5.7/en/replication-options.html
+
 # ---------------------------------------------------------
 
 class MySQLNode(object):
@@ -152,7 +154,7 @@ class MySQLConfig(object):
         # replace server-id with ID derived from hostname
         # ref https://dev.mysql.com/doc/refman/5.7/en/replication-configuration.html
         hostname = socket.gethostname()
-        server_id = int(str(hostname)[:4], 16)
+        server_id = hash(hostname) %  MAX_SERVER_ID
 
         with open('/etc/my.cnf.tmpl', 'r') as f:
             template = string.Template(f.read())
