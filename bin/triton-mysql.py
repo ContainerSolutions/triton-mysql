@@ -154,7 +154,11 @@ class MySQLConfig(object):
         # replace server-id with ID derived from hostname
         # ref https://dev.mysql.com/doc/refman/5.7/en/replication-configuration.html
         hostname = socket.gethostname()
-        server_id = hash(hostname) %  MAX_SERVER_ID
+        if os.environ.get("MESOS_TASK_ID") != None:
+        else:
+            server_id = hash(os.environ.get("MESOS_TASK_ID")) %  MAX_SERVER_ID
+        else:
+            server_id = hash(hostname) %  MAX_SERVER_ID
 
         with open('/etc/my.cnf.tmpl', 'r') as f:
             template = string.Template(f.read())
