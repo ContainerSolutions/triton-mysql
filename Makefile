@@ -5,11 +5,14 @@
 MAKEFLAGS += --warn-undefined-variables
 SHELL := $(shell which bash)
 .SHELLFLAGS := -eu -o pipefail
-.DEFAULT_GOAL := build
+.DEFAULT_GOAL := help
 
 MANTA_LOGIN ?= triton_mysql
 MANTA_ROLE ?= triton_mysql
 MANTA_POLICY ?= triton_mysql
+
+help:
+	cat ./README.md
 
 build:
 	docker-compose -p my -f local-compose.yml build
