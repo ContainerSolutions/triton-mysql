@@ -3,7 +3,7 @@
 # directly works just fine without this.
 
 MAKEFLAGS += --warn-undefined-variables
-SHELL := /bin/bash
+SHELL := $(shell which bash)
 .SHELLFLAGS := -eu -o pipefail
 .DEFAULT_GOAL := build
 
