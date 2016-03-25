@@ -18,8 +18,9 @@ build:
 	docker-compose -p my -f local-compose.yml build
 
 ship:
-	docker tag -f my_mysql 0x74696d/triton-mysql
-	docker push 0x74696d/triton-mysql
+	$(call check_var, IMAGE_PREFIX, IMAGE_PREFIX must be set)
+	docker tag -f my_mysql ${IMAGE_PREFIX}/triton-mysql
+	docker push ${IMAGE_PREFIX}/triton-mysql
 
 # -------------------------------------------------------
 # for testing against Docker locally
