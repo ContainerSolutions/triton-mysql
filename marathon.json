@@ -1,0 +1,16 @@
+{
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "${env.IMAGE_PREFIX}/triton-mysql"
+    }
+  },
+  "env" : {
+    "CONSUL_HTTP_SSL_VERIFY" : "true"
+  },
+  "id": "${env.IMAGE_PREFIX}/triton-mysql",
+  "forcePullImage": "true",
+  "instances": 1,
+  "cpus": 0.5,
+  "mem": 512
+}

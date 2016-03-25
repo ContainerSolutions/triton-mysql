@@ -77,3 +77,17 @@ manta:
 check_var = $(foreach 1,$1,$(__check_var))
 __check_var = $(if $(value $1),,\
 	$(error Missing $1 $(if $(value 2),$(strip $2))))
+
+# -------------------------------------------------------
+# mantl.io stuff
+
+mantle-add: mantl-check
+		cat marathon.json |  \
+			sed "s/\$${env.IMAGE_PREFIX}/$${IMAGE_PREFIX}/" | \
+			curl -q -u $$MANTL_LOGIN:$$MANTL_PASSWORD -k -X POST -H 'Content-Type: application/json' https://$${MANTL_CONTROL_HOST}:8080/v2/apps -d@-
+
+
+mantl-check:
+	$(call check_var, MANTL_LOGIN MANTL_PASSWORD MANTL_CONTROL_HOST, Required for interaction with mantl)
+
+.PHONY: mantl-check
