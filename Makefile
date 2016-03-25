@@ -86,6 +86,12 @@ mantl-add: mantl-check
 			sed "s/\$${env.IMAGE_PREFIX}/$${IMAGE_PREFIX}/" | \
 			curl -q -u $$MANTL_LOGIN:$$MANTL_PASSWORD -k -X POST -H 'Content-Type: application/json' https://$${MANTL_CONTROL_HOST}:8080/v2/apps -d@-
 
+mantl-del: mantl-check
+		@echo "## deleting $${app}"
+		@curl -q -u $$MANTL_LOGIN:$$MANTL_PASSWORD -k -X DELETE -H 'Content-Type: application/json' https://$${MANTL_CONTROL_HOST}:8080/v2/apps/$${IMAGE_PREFIX}/triton-mysql
+		@echo -e "\n"
+
+
 
 mantl-check:
 	$(call check_var, MANTL_LOGIN MANTL_PASSWORD MANTL_CONTROL_HOST, Required for interaction with mantl)
