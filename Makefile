@@ -81,8 +81,8 @@ __check_var = $(if $(value $1),,\
 # -------------------------------------------------------
 # mantl.io stuff
 
-mantle-add: mantl-check
-		cat marathon.json |  \
+mantl-add: mantl-check
+	@cat marathon.json |  \
 			sed "s/\$${env.IMAGE_PREFIX}/$${IMAGE_PREFIX}/" | \
 			curl -q -u $$MANTL_LOGIN:$$MANTL_PASSWORD -k -X POST -H 'Content-Type: application/json' https://$${MANTL_CONTROL_HOST}:8080/v2/apps -d@-
 
