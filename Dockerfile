@@ -28,6 +28,9 @@ RUN export CB=containerbuddy-0.1.1 &&\
 COPY bin/* /bin/
 COPY etc/* /etc/
 
+ADD ./cacert.pem  /usr/local/share/ca-certificates/mantl.crt
+RUN update-ca-certificates
+
 # override the parent entrypoint
 ENTRYPOINT []
 
