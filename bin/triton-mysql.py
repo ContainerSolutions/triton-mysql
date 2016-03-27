@@ -1,4 +1,5 @@
 from __future__ import print_function
+import pprint
 from datetime import datetime
 import fcntl
 import json
@@ -17,7 +18,22 @@ import time
 import pymysql
 import consul as pyconsul
 import manta
+import requests
+try:
+    import http.client as http_client
+except ImportError:
+    # Python 2
+    import httplib as http_client
+http_client.HTTPConnection.debuglevel = 1
 
+# You must initialize logging, otherwise you'll not see debug output.
+logging.basicConfig() 
+logging.getLogger().setLevel(logging.DEBUG)
+requests_log = logging.getLogger("requests.packages.urllib3")
+requests_log.setLevel(logging.DEBUG)
+requests_log.propagate = True
+
+# pymysql.connections.DEBUG = True
 logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s %(message)s',
                     stream=sys.stdout,
                     level=logging.getLevelName(
@@ -28,11 +44,12 @@ requests_logger.setLevel(logging.WARN)
 # if we log Manta client at debug we'll barf when it tries to log
 # the body of binary data
 manta_logger = logging.getLogger('manta')
-manta_logger.setLevel(logging.INFO)
+manta_logger.setLevel(logging.DEBUG)
 
 log = logging.getLogger('triton-mysql')
 
 consul = pyconsul.Consul(host=os.environ.get('TRITON_MYSQL_CONSUL', 'consul'))
+
 config = None
 
 # consts for node state
@@ -243,16 +260,23 @@ def on_start():
     Set up this node as the primary (if none yet exists), or the
     standby (if none yet exists), or replica (default case)
     """
+    print("DBG:ON_START")
     primary = get_primary_node()
     if not primary or primary == get_name():
+        print("DBG:START run_as_primary")
         run_as_primary()
+        print("DBG:STOP run_as_primary")
         return
     elif USE_STANDBY:
         standby = get_standby_node()
         if not standby or standby == get_name():
+            print("DBG:START run_as_standby")
             run_as_standby()
+            print("DBG:STOP run_as_standby")
             return
+    print("DBG:START run_as_replica")
     run_as_replica()
+    print("DBG:STOP run_as_replica")
 
 def health():
     """
@@ -426,6 +450,7 @@ def run_as_primary():
         set_timezone_info()
         node.conn = wait_for_connection()
         setup_root_user(node.conn)
+        print("DBG:START CREATE_DB")
         create_db(node.conn)
         create_default_user(node.conn)
         create_repl_user(node.conn)
@@ -458,9 +483,11 @@ def _run_replica(node):
         log.info('Setting up replication.')
         last_backup = has_snapshot()
         if last_backup:
+            print("DBG:LAST BACKUP EXIST")
             get_snapshot(last_backup)
             restore_from_snapshot(last_backup)
         else:
+            print("DBG:LAST BACKUP DOES NOT EXIST")
             log.info('Initializing as replica.')
             initialize_db()
 
@@ -471,6 +498,7 @@ def _run_replica(node):
         node.conn = wait_for_connection(**ctx)
         set_primary_for_replica(node.conn)
     except Exception as ex:
+        print("DBG:EXCEPTION" + str(ex))
         log.exception(ex)
     finally:
         if node.temp_pid:
@@ -558,9 +586,11 @@ def initialize_db():
                                '--user=mysql',
                                '--datadir={}'.format(config.datadir)])
         log.info('Database initialized.')
+        print("DBG:MYSQL INITIALIZED")
         return True
     except subprocess.CalledProcessError:
         log.warn('Database was previously initialized.')
+        print("DBG:MYSQL PREVIOUSLY INITIALIZED")
         return False
 
 def make_datadir():
