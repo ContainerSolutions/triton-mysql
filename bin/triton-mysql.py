@@ -44,7 +44,7 @@ requests_logger.setLevel(logging.WARN)
 # if we log Manta client at debug we'll barf when it tries to log
 # the body of binary data
 manta_logger = logging.getLogger('manta')
-manta_logger.setLevel(logging.DEBUG)
+manta_logger.setLevel(logging.INFO)
 
 log = logging.getLogger('triton-mysql')
 
@@ -886,10 +886,15 @@ def get_primary_host(primary=None, timeout=30):
     while timeout > 0:
         try:
             nodes = consul.health.service(PRIMARY_KEY, passing=True)[1]
+            print("DBG:Nodes")
+            print(pprint.pformat(nodes))
             ips = [service['Service']['Address'] for service in nodes
                    if service['Service']['ID'].endswith(primary)]
+            print("DBG:IPs")
+            print(pprint.pformat(ips))
             return ips[0]
-        except Exception:
+        except Exception as ex:
+            print("DBG:IPs" + str(ex))
             timeout = timeout - 1
             time.sleep(1)
 
