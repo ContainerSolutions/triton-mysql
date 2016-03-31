@@ -18,9 +18,9 @@ RUN curl -Ls -o get-pip.py https://bootstrap.pypa.io/get-pip.py && \
         manta==2.5.0
 
 # get Containerbuddy release
-RUN export CB=containerbuddy-1.2.1 &&\
+RUN export CB=containerbuddy-1.3.0 &&\
    curl -Lo /tmp/${CB}.tar.gz \
-   https://github.com/joyent/containerbuddy/releases/download/1.2.1/${CB}.tar.gz && \
+   https://github.com/joyent/containerbuddy/releases/download/1.3.0/${CB}.tar.gz && \
    tar -xf /tmp/${CB}.tar.gz && \
    mv /containerbuddy /bin/
 

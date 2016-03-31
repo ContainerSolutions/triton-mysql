@@ -278,6 +278,21 @@ def on_start():
     run_as_replica()
     print("DBG:STOP run_as_replica")
 
+def post_stop():
+    log.debug('post_stop check fired.')
+    try:
+        node = MySQLNode()
+
+        if node.is_primary():
+            if not session_id:
+                session_id = get_session()
+            consul.session.destroy(session_id)
+            result = consul.kv.delete(PRIMARY_KEY)
+
+    except Exception as ex:
+        print("DBG:POST_STOP EXCEPTION" + str(ex))        
+        log.exception(ex)
+
 def health():
     """
     Run a simple health check. Also acts as a check for whether the
@@ -906,9 +921,13 @@ def get_primary_node(timeout=10):
     while timeout > 0:
         try:
             result = consul.kv.get(PRIMARY_KEY)
+            print("DBG:GET PRIMARY_KEY RESULT " + str(result))
             if result[1]:
+                print("DBG:GET PRIMARY_KEY RESULT[1] " + pprint.pformat(result[1]))
                 if result[1].get('Session', False):
+                    print("DBG:result[1]['Value'] " + pprint.pformat(result[1]['Value']))
                     return result[1]['Value']
+                print("DBG:result[1]['Value'] = false")
             # either there is no primary or the session has expired
             return None
         except Exception as ex:
