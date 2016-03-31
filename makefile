@@ -69,22 +69,26 @@ manta:
 	mchmod -- +triton_mysql /${SDC_ACCOUNT}/stor/${MANTA_LOGIN}
 
 add: check
-	@for app in $(APPS); do \
-		echo "## adding $${app}"; \
-		cat $${app}/marathon.json |  \
-			sed "s/\$${env.IMAGE_PREFIX}/${IMAGE_PREFIX}/" | \
-			sed "s/\$${env.MINIMESOS_CONSUL_IP}/$${MINIMESOS_CONSUL_IP}/" | \
-  tee ala | \
-			curl -vvvv -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X POST -H 'Content-Type: application/json' $${MINIMESOS_MARATHON}/v2/apps -d@-; \
-			echo -e "\n"; \
-	done
+	@echo "## adding"; \
+	cat marathon.json |  \
+	sed "s/\$${env.IMAGE_PREFIX}/${IMAGE_PREFIX}/" | \
+	sed "s/\$${env.MINIMESOS_CONSUL_IP}/$${MINIMESOS_CONSUL_IP}/" | \
+	curl -vvvv -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X POST -H 'Content-Type: application/json' $${MINIMESOS_MARATHON}/v2/apps -d@-; \
+	echo -e "\n"; \
+
+status: check
+	@echo "## checking status"; \
+	curl -vvvv -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -H 'Content-Type: application/json' $${MINIMESOS_MARATHON}/v2/apps?id=triton-mysql/ap-mysql | jq ;\
+	echo -e "\n"; \
+
 
 del: check
-	@for app in $(APPS); do \
-		echo "## deleting $${app}"; \
-		curl -q -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X DELETE -H 'Content-Type: application/json' $${MINIMESOS_MARATHON}/v2/apps/triton-mysql/ap-$$app; \
-		echo -e "\n"; \
-	done
+	@echo "## removing"; \
+	cat marathon.json |  \
+	sed "s/\$${env.IMAGE_PREFIX}/${IMAGE_PREFIX}/" | \
+	sed "s/\$${env.MINIMESOS_CONSUL_IP}/$${MINIMESOS_CONSUL_IP}/" | \
+	curl -q -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X DELETE -H 'Content-Type: application/json' $${MINIMESOS_MARATHON}/v2/apps/triton-mysql/ap-mysql; \
+	echo -e "\n"; \
 
 check:
 	@test_present() { \
