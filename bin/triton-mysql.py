@@ -47,8 +47,17 @@ manta_logger = logging.getLogger('manta')
 manta_logger.setLevel(logging.INFO)
 
 log = logging.getLogger('triton-mysql')
-
-consul = pyconsul.Consul(host=os.environ.get('TRITON_MYSQL_CONSUL', 'consul'))
+CONSUL_SCHEME = os.environ.get('CONSUL_SCHEME', "http")
+CONSUL_USER = os.environ.get('CONSUL_USER', "")
+CONSUL_PASSWORD = os.environ.get('CONSUL_PASSWORD', "")
+# consul = pyconsul.Consul(host=os.environ.get('TRITON_MYSQL_CONSUL', 'consul'))
+consul = pyconsul.Consul(
+    host='consul.service.consul',
+    verify="/usr/local/share/ca-certificates/mantl.crt",
+    token=os.environ.get("CONSUL_TOKEN"),
+    scheme=CONSUL_SCHEME,
+    auth=(CONSUL_USER, CONSUL_PASSWORD)
+)
 
 config = None
 

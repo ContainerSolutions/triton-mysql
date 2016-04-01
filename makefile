@@ -71,24 +71,21 @@ manta:
 add: check
 	@echo "## adding"; \
 	cat marathon.json |  \
-	sed "s/\$${env.IMAGE_PREFIX}/${IMAGE_PREFIX}/" | \
-	sed "s/\$${env.MINIMESOS_CONSUL_IP}/$${MINIMESOS_CONSUL_IP}/" | \
-	curl -vvvv -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X POST -H 'Content-Type: application/json' $${MINIMESOS_MARATHON}/v2/apps -d@-; \
-	echo -e "\n"; \
+        sed 's%\$${env.IMAGE_PREFIX}%'${IMAGE_PREFIX}'%' | \
+        sed 's%\$${env.CONSUL_ADDRESS}%'${CONSUL_ADDR}'%' | \
+	curl -vvvv -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X POST -H 'Content-Type: application/json' $${MARATHON_URL}/v2/apps -d@-
 
 status: check
 	@echo "## checking status"; \
-	curl -vvvv -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -H 'Content-Type: application/json' $${MINIMESOS_MARATHON}/v2/apps?id=triton-mysql/ap-mysql | jq ;\
-	echo -e "\n"; \
+	curl -vvvv -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -H 'Content-Type: application/json' $${MARATHON_URL}/v2/apps?id=triton-mysql/ap-mysql | jq
 
 
 del: check
 	@echo "## removing"; \
 	cat marathon.json |  \
-	sed "s/\$${env.IMAGE_PREFIX}/${IMAGE_PREFIX}/" | \
-	sed "s/\$${env.MINIMESOS_CONSUL_IP}/$${MINIMESOS_CONSUL_IP}/" | \
-	curl -q -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X DELETE -H 'Content-Type: application/json' $${MINIMESOS_MARATHON}/v2/apps/triton-mysql/ap-mysql; \
-	echo -e "\n"; \
+        sed 's%\$${env.IMAGE_PREFIX}%'${IMAGE_PREFIX}'%' | \
+        sed 's%\$${env.CONSUL_ADDRESS}%'${CONSUL_ADDR}'%' | \
+	curl -q -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X DELETE -H 'Content-Type: application/json' $${MARATHON_URL}/v2/apps/triton-mysql/ap-mysql
 
 check:
 	@test_present() { \
