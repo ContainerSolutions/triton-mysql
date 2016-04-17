@@ -14,16 +14,19 @@ import string
 import subprocess
 import sys
 import time
+import hashlib
 
 import pymysql
 import consul as pyconsul
 import manta
 import requests
+from requests.auth import HTTPBasicAuth
 try:
     import http.client as http_client
 except ImportError:
     # Python 2
     import httplib as http_client
+
 http_client.HTTPConnection.debuglevel = 1
 
 # You must initialize logging, otherwise you'll not see debug output.
@@ -50,13 +53,16 @@ log = logging.getLogger('triton-mysql')
 CONSUL_SCHEME = os.environ.get('CONSUL_SCHEME', "http")
 CONSUL_USER = os.environ.get('CONSUL_USER', "")
 CONSUL_PASSWORD = os.environ.get('CONSUL_PASSWORD', "")
+
+print("DBG:CONSUL_USER " + CONSUL_USER)
+print("DBG:CONSUL_PASSWORD " + CONSUL_PASSWORD)
 # consul = pyconsul.Consul(host=os.environ.get('TRITON_MYSQL_CONSUL', 'consul'))
 consul = pyconsul.Consul(
     host='consul.service.consul',
     verify="/usr/local/share/ca-certificates/mantl.crt",
     token=os.environ.get("CONSUL_TOKEN"),
     scheme=CONSUL_SCHEME,
-    auth=(CONSUL_USER, CONSUL_PASSWORD)
+    auth=(CONSUL_USER, CONSUL_PASSWORD),
 )
 
 config = None
@@ -81,7 +87,11 @@ BACKUP_TTL = '{}s'.format(os.environ.get('BACKUP_TTL', 86400)) # every 24 hours
 SESSION_CACHE_FILE = os.environ.get('SESSION_CACHE_FILE', '/tmp/mysql-session')
 SESSION_NAME = os.environ.get('SESSION_NAME', 'mysql-primary-lock')
 SESSION_TTL = int(os.environ.get('SESSION_TTL', 60))
+MYSQL_PORT=int(os.environ.get('PORT0', 3306))
+SERVER_ID=int(hashlib.sha224(os.environ.get('MESOS_TASK_ID', '1234')).hexdigest()[-4:], 16)
 
+print("DBG:MYSQL_PORT:" + str(MYSQL_PORT))
+print("DBG:SERVER_ID:" + str(SERVER_ID))
 # ---------------------------------------------------------
 
 class MySQLNode(object):
@@ -101,7 +111,8 @@ class MySQLNode(object):
         from Consul and cache the result.
         """
         if not self.state:
-            if self.hostname == get_primary_node():
+            primary = get_primary_node() 
+            if self.hostname == primary[0] and str(MYSQL_PORT) == primary[1]:
                 self.state = PRIMARY
             elif USE_STANDBY and (self.hostname == get_standby_node()):
                 self.state = STANDBY
@@ -178,13 +189,13 @@ class MySQLConfig(object):
         # replace server-id with ID derived from hostname
         # ref https://dev.mysql.com/doc/refman/5.7/en/replication-configuration.html
         hostname = socket.gethostname()
-        server_id = int(str(hostname)[:4], 16)
-
         with open('/etc/my.cnf.tmpl', 'r') as f:
             template = string.Template(f.read())
             rendered = template.substitute(buffer=innodb_buffer_pool_size,
-                                           server_id=server_id,
-                                           hostname=hostname)
+                                           server_id=SERVER_ID,
+                                           hostname=hostname,
+					   port=MYSQL_PORT)
+        print("DBG:MYSQL_CONFIG UPDATED")
         with open('/etc/my.cnf', 'w') as f:
             f.write(rendered)
 
@@ -239,7 +250,7 @@ class Containerbuddy(object):
         # TODO: we should make sure we can support JSON-in-env-var
         # the same as Containerbuddy itself
         self.node = node
-        self.path = os.environ.get('CONTAINERBUDDY').replace('file://', '')
+        self.path = os.environ.get('CONTAINERPILOT').replace('file://', '')
         with open(self.path, 'r') as f:
             self.config = json.loads(f.read())
 
@@ -270,8 +281,8 @@ def on_start():
     standby (if none yet exists), or replica (default case)
     """
     print("DBG:ON_START")
-    primary = get_primary_node()
-    if not primary or primary == get_name():
+    primary_result = get_primary_node()
+    if not primary_result or (primary_result[0] == get_name() and str(MYSQL_PORT) == str(primary_result[1])):
         print("DBG:START run_as_primary")
         run_as_primary()
         print("DBG:STOP run_as_primary")
@@ -387,7 +398,7 @@ def on_change():
             primary = get_primary_node()
             if not primary:
                 session_id = get_session(no_cache=True)
-                if mark_with_session(PRIMARY_KEY, node.hostname, session_id):
+		if mark_with_session(PRIMARY_KEY, node.hostname + ':' + str(MYSQL_PORT), session_id):
                     node.state = PRIMARY
                     if cb.update():
                         cb.reload()
@@ -400,8 +411,8 @@ def on_change():
 
             # we know who the primary is but not whether they're healthy.
             # if it's not healthy, we'll throw an exception and start over.
-            ip = get_primary_host(primary=primary)
-            if ip == node.ip:
+            ip, primary[1] = get_primary_host(primary=primary[0])
+            if ip == node.ip and str(MYSQL_PORT) == str(primary[1]) :
                 if cb.update():
                     cb.reload()
                 return
@@ -592,7 +603,7 @@ def mark_with_session(key, val, session_id, timeout=10):
 def mark_as_primary(node):
     """ Write flag to Consul to mark this node as primary """
     session_id = get_session()
-    if not mark_with_session(PRIMARY_KEY, node.hostname, session_id):
+    if not mark_with_session(PRIMARY_KEY, node.hostname + ':' + str(MYSQL_PORT), session_id):
         log.error('Tried to mark node primary but primary exists, '
                   'restarting bootstrap process.')
         on_start()
@@ -881,17 +892,17 @@ def set_primary_for_replica(conn):
     transactions.
     """
     log.debug('set_primary_for_replica')
-    primary = get_primary_host()
+    primary_host, primary_port = get_primary_host()
     sql = ('CHANGE MASTER TO '
            'MASTER_HOST           = %s, '
            'MASTER_USER           = %s, '
            'MASTER_PASSWORD       = %s, '
-           'MASTER_PORT           = 3306, '
+           'MASTER_PORT           = %s, '
            'MASTER_CONNECT_RETRY  = 60, '
            'MASTER_AUTO_POSITION  = 1, '
            'MASTER_SSL            = 0; '
            'START SLAVE;')
-    mysql_exec(conn, sql, (primary, config.repl_user, config.repl_password,))
+    mysql_exec(conn, sql, (primary_host, config.repl_user, config.repl_password, int(primary_port),))
 
 
 def get_primary_host(primary=None, timeout=30):
@@ -905,7 +916,7 @@ def get_primary_host(primary=None, timeout=30):
         primary = get_primary_node()
     if not primary:
         raise Exception('Tried replication setup but could not find primary.')
-    log.debug('Checking if primary (%s) is healthy...', primary)
+    log.debug('Checking if primary (%s:%s) is healthy...', primary[0], primary[1])
 
     while timeout > 0:
         try:
@@ -913,10 +924,10 @@ def get_primary_host(primary=None, timeout=30):
             print("DBG:Nodes")
             print(pprint.pformat(nodes))
             ips = [service['Service']['Address'] for service in nodes
-                   if service['Service']['ID'].endswith(primary)]
+                   if service['Service']['ID'].endswith(primary[0]) and str(service['Service']['Port']) == str(primary[1])]
             print("DBG:IPs")
             print(pprint.pformat(ips))
-            return ips[0]
+            return (ips[0], primary[1])
         except Exception as ex:
             print("DBG:IPs" + str(ex))
             timeout = timeout - 1
@@ -935,7 +946,7 @@ def get_primary_node(timeout=10):
                 print("DBG:GET PRIMARY_KEY RESULT[1] " + pprint.pformat(result[1]))
                 if result[1].get('Session', False):
                     print("DBG:result[1]['Value'] " + pprint.pformat(result[1]['Value']))
-                    return result[1]['Value']
+		    return result[1]['Value'].split(':')
                 print("DBG:result[1]['Value'] = false")
             # either there is no primary or the session has expired
             return None

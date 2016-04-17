@@ -1,5 +1,5 @@
 {
-  "consul": "{{ .TRITON_MYSQL_CONSUL }}:8500",
+  "consul": "{{ .TRITON_MYSQL_CONSUL }}",
   "preStart": "python /bin/triton-mysql.py",
   "postStop": "python /bin/triton-mysql.py post_stop",
   "services": [

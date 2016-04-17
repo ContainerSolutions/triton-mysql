@@ -21,7 +21,7 @@ innodb_buffer_pool_size = $buffer
 # numerical ID derived from the container hostname
 server-id=$server_id
 report-host=$hostname
-
+port=$port
 # We have intentionally not set log_bin here so that we're forced to pass
 # it into the command-line parameters. This lets us bootstrap the DB without
 # causing binary log entries that will prevent replicas from coming online

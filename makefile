@@ -73,11 +73,11 @@ add: check
 	cat marathon.json |  \
         sed 's%\$${env.IMAGE_PREFIX}%'${IMAGE_PREFIX}'%' | \
         sed 's%\$${env.CONSUL_ADDRESS}%'${CONSUL_ADDR}'%' | \
-	curl -vvvv -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X POST -H 'Content-Type: application/json' $${MARATHON_URL}/v2/apps -d@-
+	curl -s -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X POST -H 'Content-Type: application/json' $${MARATHON_URL}/v2/apps -d@-
 
 status: check
 	@echo "## checking status"; \
-	curl -vvvv -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -H 'Content-Type: application/json' $${MARATHON_URL}/v2/apps?id=triton-mysql/ap-mysql | jq
+	curl -s -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -H 'Content-Type: application/json' $${MARATHON_URL}/v2/apps?id=triton-mysql/ap-mysql | jq
 
 
 del: check
@@ -85,7 +85,7 @@ del: check
 	cat marathon.json |  \
         sed 's%\$${env.IMAGE_PREFIX}%'${IMAGE_PREFIX}'%' | \
         sed 's%\$${env.CONSUL_ADDRESS}%'${CONSUL_ADDR}'%' | \
-	curl -q -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X DELETE -H 'Content-Type: application/json' $${MARATHON_URL}/v2/apps/triton-mysql/ap-mysql
+	curl -s -u $$MARATHON_LOGIN:$$MARATHON_PASSWORD -k -X DELETE -H 'Content-Type: application/json' $${MARATHON_URL}/v2/apps/triton-mysql/ap-mysql
 
 check:
 	@test_present() { \
